@@ -98,3 +98,69 @@ BEGIN
     RETURN jsonb_build_object('ok', true);
 END;
 $$;
+
+-- -----------------------------------------------------------------------------
+-- Function 2: get_status
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_status(
+    p_slug TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    -- Named configuration constants
+    c_window_minutes  CONSTANT INT := 20;
+    c_min_reports     CONSTANT INT := 2;
+
+    -- Local state variables
+    v_canteen_id      UUID;
+    v_report_count    INT;
+    v_last_report_at  TIMESTAMPTZ;
+    v_median_level    SMALLINT;
+BEGIN
+    -- 1. Check if the canteen exists:
+    SELECT id INTO v_canteen_id
+    FROM public.canteens
+    WHERE slug = p_slug;
+
+    -- If slug does not exist, return defaults:
+    IF v_canteen_id IS NULL THEN
+        RETURN jsonb_build_object(
+            'level', NULL,
+            'report_count', 0,
+            'last_report_at', NULL
+        );
+    END IF;
+
+    -- 2. Aggregate reports from the sliding window (last 20 minutes):
+    SELECT 
+        COUNT(*)::INT,
+        MAX(created_at),
+        percentile_disc(0.5) WITHIN GROUP (ORDER BY level)
+    INTO 
+        v_report_count,
+        v_last_report_at,
+        v_median_level
+    FROM public.reports
+    WHERE canteen_id = v_canteen_id
+      AND created_at >= now() - (c_window_minutes || ' minutes')::INTERVAL;
+
+    -- 3. Confidence threshold:
+    -- If report_count is less than 2, return level as null (insufficient sample size),
+    -- but still return count and last_report_at.
+    IF v_report_count < c_min_reports THEN
+        v_median_level := NULL;
+    END IF;
+
+    -- 4. Return result object:
+    RETURN jsonb_build_object(
+        'level', v_median_level,
+        'report_count', v_report_count,
+        'last_report_at', v_last_report_at
+    );
+END;
+$$;
