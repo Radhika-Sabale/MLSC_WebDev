@@ -111,10 +111,73 @@ body {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
   background-color: var(--bg-surface);
   display: flex;
   flex-direction: column;
+}
+
+/* PageShell Layout */
+.page-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.page-shell-header {
+  padding: 1.5rem 1.25rem 0.5rem;
+}
+
+.page-shell-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 1.25rem 1rem;
+}
+
+.page-shell-bottom {
+  padding: 0.75rem 1.25rem;
+  margin-top: auto;
+}
+
+/* Full-width Thumb-friendly Back Button */
+.back-button {
+  min-height: 56px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--bg-surface-subtle);
+  color: var(--text-sub);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.back-button:hover {
+  background-color: var(--border-light);
+  color: var(--text-main);
+}
+
+.back-button:active {
+  transform: scale(0.98);
+}
+
+.back-button-icon {
+  font-size: 1.15rem;
 }
 
 /* Page container with bottom clearance for fixed thumb bar */
