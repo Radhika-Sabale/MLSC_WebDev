@@ -164,3 +164,14 @@ BEGIN
     );
 END;
 $$;
+
+-- -----------------------------------------------------------------------------
+-- Permissions
+-- -----------------------------------------------------------------------------
+-- Revoke execution from PUBLIC:
+REVOKE EXECUTE ON FUNCTION public.submit_report(TEXT, TEXT, TEXT, INT) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.get_status(TEXT) FROM PUBLIC;
+
+-- Grant execution explicitly to anon and authenticated roles:
+GRANT EXECUTE ON FUNCTION public.submit_report(TEXT, TEXT, TEXT, INT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_status(TEXT) TO anon, authenticated;
