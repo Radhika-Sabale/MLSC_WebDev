@@ -23,6 +23,26 @@ export type SubmitReportResult =
   | { ok: false; reason: 'network'; message?: string };
 
 /**
+ * Fetches all active canteens ordered by name.
+ */
+export async function getCanteens(): Promise<Canteen[]> {
+  try {
+    const { data, error } = await supabase
+      .from('canteens')
+      .select('id, slug, name')
+      .order('name', { ascending: true });
+
+    if (error || !data) {
+      return [];
+    }
+
+    return data as Canteen[];
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Fetches basic metadata for a canteen by slug. Returns null if not found.
  */
 export async function getCanteen(slug: string): Promise<Canteen | null> {
