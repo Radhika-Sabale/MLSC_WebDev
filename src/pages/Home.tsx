@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useCanteens } from '../hooks/useCanteens';
 import { PageShell } from '../components/PageShell';
 import { CanteenCard } from '../components/CanteenCard';
+import { BadgeShelf } from '../components/BadgeShelf';
 
 /**
  * Home Page - Main Campus Canteens Directory
@@ -84,6 +85,8 @@ export const Home: React.FC = () => {
             ))}
           </ul>
         )}
+
+        <BadgeShelf />
       </div>
     </PageShell>
   );
