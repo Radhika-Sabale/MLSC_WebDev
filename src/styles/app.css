@@ -536,6 +536,207 @@ body {
   cursor: pointer;
 }
 
+/* Home Page Header */
+.home-header {
+  margin-bottom: 0.5rem;
+}
+
+.home-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-main);
+  margin-bottom: 0.25rem;
+}
+
+.home-subtitle {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+/* One-Thumb Usability: Push cards towards bottom on tall screens */
+.home-thumb-container {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding-bottom: 1.5rem;
+}
+
+.home-qr-hint {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.home-qr-icon {
+  font-size: 1rem;
+}
+
+/* Canteen Card & List */
+.canteen-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.canteen-list-item {
+  list-style: none;
+}
+
+.canteen-card {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.15rem;
+  background-color: var(--bg-surface-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: inherit;
+  gap: 0.75rem;
+  transition: transform 0.1s ease, border-color 0.15s ease, background-color 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.canteen-card:hover {
+  border-color: var(--border-focus);
+  background-color: var(--bg-surface-elevated);
+}
+
+.canteen-card:active {
+  transform: scale(0.985);
+}
+
+.canteen-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.canteen-card-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.canteen-card-meta {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.canteen-card-bullet {
+  opacity: 0.5;
+}
+
+.canteen-card-unavailable {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.canteen-card-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.canteen-card-arrow {
+  font-size: 1.35rem;
+  color: var(--text-muted);
+  line-height: 1;
+  font-weight: 300;
+}
+
+/* Card Skeleton Loaders */
+.canteen-card-skeleton {
+  cursor: wait;
+}
+
+.canteen-card-skeleton-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.skeleton-card-title {
+  width: 140px;
+  height: 1.2rem;
+}
+
+.skeleton-card-subtitle {
+  width: 90px;
+  height: 0.85rem;
+}
+
+.skeleton-card-pill {
+  width: 110px;
+  height: 1.85rem;
+  border-radius: var(--radius-full);
+}
+
+/* Large Retry Button for Home Error State */
+.btn-retry-large {
+  min-height: 56px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-surface-subtle);
+  color: var(--accent-color);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-retry-large:hover {
+  background-color: var(--border-light);
+}
+
+.home-error-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  margin-top: auto;
+}
+
+.home-error-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.home-error-desc {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.home-empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}
+
 /* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
