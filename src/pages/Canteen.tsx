@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { getCanteen, submitReport, type Canteen as CanteenType, type CrowdLevel } from '../lib/api';
 import { useStatus } from '../hooks/useStatus';
@@ -6,18 +6,22 @@ import { PageShell } from '../components/PageShell';
 import { StatusPill } from '../components/StatusPill';
 import { ReportBar } from '../components/ReportBar';
 import { BackButton } from '../components/BackButton';
+import { useToast } from '../components/Toast';
+import { recordReport, getReportLog } from '../lib/reportLog';
+import { getEarnedBadges, diffBadges } from '../lib/badges';
 import { timeAgo, formatCountdown } from '../lib/time';
 
 const DEFAULT_COOLDOWN_SECONDS = 15 * 60; // 15-minute standard cooldown
 
 /**
- * Canteen Page - Stage 4 with PageShell and BackButton
- * Shows real-time queue status, provides one-tap reporting, and manages
- * local cooldowns, bad key handling, and mobile thumb navigation.
+ * Canteen Page - Stage 5 with Badge and Toast integration
+ * Shows real-time queue status, provides one-tap reporting, manages
+ * cooldowns, celebrates newly earned badges, and announces live status changes.
  */
 export const Canteen: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
+  const toast = useToast();
 
   const [canteen, setCanteen] = useState<CanteenType | null>(null);
   const [canteenLoading, setCanteenLoading] = useState<boolean>(true);
@@ -28,7 +32,6 @@ export const Canteen: React.FC = () => {
   const [submittingLevel, setSubmittingLevel] = useState<CrowdLevel | null>(null);
 
   // Status & Notification banners
-  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Cooldown & Key restriction states
@@ -36,6 +39,10 @@ export const Canteen: React.FC = () => {
   const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
 
   const { status, loading: statusLoading, error: statusError, refetch } = useStatus(slug);
+
+  // Live status change announcer (only announces when level or count actually changes)
+  const lastAnnouncedStatusRef = useRef<{ level: CrowdLevel | null; count: number } | null>(null);
+  const [statusAnnouncement, setStatusAnnouncement] = useState<string>('');
 
   // 1. Initial load & key resolution
   useEffect(() => {
@@ -46,7 +53,6 @@ export const Canteen: React.FC = () => {
     setCanteenNotFound(false);
     setBadKeyNotice(null);
     setErrorMessage(null);
-    setConfirmationMessage(null);
 
     const keyFromUrl = searchParams.get('k');
     const sessionKey = `canteen_qr_${slug}`;
@@ -126,6 +132,32 @@ export const Canteen: React.FC = () => {
     return () => clearInterval(intervalId);
   }, [cooldownSeconds, slug]);
 
+  // Announce live status updates politely to screen readers only when status level or report count changes
+  useEffect(() => {
+    if (!status) return;
+
+    const prev = lastAnnouncedStatusRef.current;
+    if (!prev) {
+      lastAnnouncedStatusRef.current = { level: status.level, count: status.report_count };
+      return;
+    }
+
+    if (prev.level !== status.level || prev.count !== status.report_count) {
+      lastAnnouncedStatusRef.current = { level: status.level, count: status.report_count };
+      const levelText =
+        status.level === 1
+          ? 'Under 5 min'
+          : status.level === 2
+            ? '5 to 15 min'
+            : status.level === 3
+              ? '15+ min'
+              : 'Not enough recent reports';
+      setStatusAnnouncement(
+        `Status updated: ${canteen?.name ?? 'Canteen'} is now ${levelText}, with ${status.report_count} reports.`
+      );
+    }
+  }, [status, canteen?.name]);
+
   // 3. One-tap reporting submission flow
   const handleReport = useCallback(
     async (level: CrowdLevel) => {
@@ -133,7 +165,6 @@ export const Canteen: React.FC = () => {
 
       setSubmitting(true);
       setSubmittingLevel(level);
-      setConfirmationMessage(null);
       setErrorMessage(null);
 
       const result = await submitReport(slug, qrKey, level);
@@ -141,7 +172,17 @@ export const Canteen: React.FC = () => {
       setSubmittingLevel(null);
 
       if (result.ok) {
-        setConfirmationMessage('Thanks! Your report is live.');
+        // Evaluate badges before and after storing this report
+        const beforeBadges = getEarnedBadges(getReportLog());
+        recordReport(slug);
+        const afterBadges = getEarnedBadges(getReportLog());
+        const newlyEarned = diffBadges(beforeBadges, afterBadges);
+
+        toast.show('Thanks! Your report is live.', { kind: 'success' });
+        newlyEarned.forEach((badge) => {
+          toast.show(`New badge: ${badge.name}`, { kind: 'info' });
+        });
+
         refetch();
 
         const cooldown = DEFAULT_COOLDOWN_SECONDS;
@@ -162,27 +203,31 @@ export const Canteen: React.FC = () => {
         } catch {
           // Ignore
         }
+        toast.show('You recently reported. Please wait for cooldown.', { kind: 'info' });
         return;
       }
 
       if (result.reason === 'bad_key') {
-        setBadKeyNotice('That QR code did not work. Scan the QR code at the canteen again.');
+        const badKeyMsg = 'That QR code did not work. Scan the QR code at the canteen again.';
+        setBadKeyNotice(badKeyMsg);
         try {
           sessionStorage.removeItem(`canteen_qr_${slug}`);
         } catch {
           // Ignore
         }
         setQrKey(null);
+        toast.show(badKeyMsg, { kind: 'error' });
         return;
       }
 
-      setErrorMessage(
+      const netErrMsg =
         result.reason === 'invalid_input'
           ? 'Invalid report submitted. Please try again.'
-          : 'Network error submitting report. Please try again.'
-      );
+          : 'Network error submitting report. Please try again.';
+      setErrorMessage(netErrMsg);
+      toast.show(netErrMsg, { kind: 'error' });
     },
-    [slug, qrKey, submitting, cooldownSeconds, refetch]
+    [slug, qrKey, submitting, cooldownSeconds, refetch, toast]
   );
 
   // Compute disabled state and descriptive message for ReportBar
@@ -278,22 +323,12 @@ export const Canteen: React.FC = () => {
       }
     >
       <div className="canteen-body-area">
-        {/* Confirmation banner */}
-        {confirmationMessage && (
-          <div className="feedback-banner feedback-banner-success" aria-live="polite">
-            <span>{confirmationMessage}</span>
-            <button
-              type="button"
-              className="btn-dismiss"
-              onClick={() => setConfirmationMessage(null)}
-              aria-label="Dismiss confirmation message"
-            >
-              ×
-            </button>
-          </div>
-        )}
+        {/* Dedicated screen-reader live region only announces when queue status changes */}
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          {statusAnnouncement}
+        </div>
 
-        {/* Error banner */}
+        {/* Persistent error banner */}
         {errorMessage && (
           <div className="feedback-banner feedback-banner-error" aria-live="polite">
             <span>{errorMessage}</span>
@@ -309,7 +344,7 @@ export const Canteen: React.FC = () => {
         )}
 
         {/* Live queue status card */}
-        <section className="status-card" aria-live="polite">
+        <section className="status-card">
           {statusLoading ? (
             <>
               <div className="skeleton skeleton-pill" />
