@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { Canteen } from './pages/Canteen';
 import { NotFound } from './pages/NotFound';
+import { ToastProvider } from './components/Toast';
 
 /**
  * RouteFocusManager ensures keyboard and screen-reader accessibility across SPA transitions:
@@ -25,15 +26,18 @@ function RouteFocusManager() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <RouteFocusManager />
-      <div className="app-viewport">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/c/:slug" element={<Canteen />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </div>
-    </BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter>
+        <RouteFocusManager />
+        <div className="app-viewport">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/c/:slug" element={<Canteen />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
+

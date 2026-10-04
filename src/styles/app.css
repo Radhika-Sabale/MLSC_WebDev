@@ -47,6 +47,7 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-full: 9999px;
+  --report-bar-height: 0px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -738,6 +739,10 @@ body {
 }
 
 /* Canteen Page Bottom Clearance & Navigation */
+.canteen-page-shell {
+  --report-bar-height: 200px;
+}
+
 .canteen-page-shell .page-shell-content {
   /* Generous bottom padding guarantees content and BackButton are never covered by fixed ReportBar */
   padding-bottom: calc(240px + env(safe-area-inset-bottom, 0px));
@@ -770,6 +775,98 @@ html, body {
   }
 }
 
+/* Toast Notification Portal & Banner */
+.toast-viewport-portal {
+  position: fixed;
+  bottom: calc(var(--report-bar-height, 0px) + env(safe-area-inset-bottom, 0px) + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  padding: 0 1.25rem;
+  z-index: 120;
+  pointer-events: none;
+}
+
+.toast-banner {
+  pointer-events: auto;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.95rem;
+  font-weight: 600;
+  animation: toast-slide-up 0.2s ease-out;
+  border: 1px solid transparent;
+}
+
+.toast-banner-success {
+  background-color: var(--level-low-bg);
+  color: var(--level-low-text);
+  border-color: var(--level-low-border);
+}
+
+.toast-banner-error {
+  background-color: var(--level-high-bg);
+  color: var(--level-high-text);
+  border-color: var(--level-high-border);
+}
+
+.toast-banner-info {
+  background-color: var(--bg-surface-elevated);
+  color: var(--text-main);
+  border-color: var(--accent-color);
+}
+
+.toast-icon-symbol {
+  font-size: 1.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  flex: 1;
+  line-height: 1.35;
+}
+
+.toast-dismiss-btn {
+  min-height: 56px;
+  min-width: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toast-dismiss-btn:hover {
+  opacity: 0.8;
+}
+
+@keyframes toast-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -778,3 +875,4 @@ html, body {
     transition-duration: 0.01ms !important;
   }
 }
+
