@@ -41,7 +41,7 @@ export const ReportBar: React.FC<ReportBarProps> = ({
         </h2>
 
         {disabledMessage && (
-          <p className="report-bar-disabled-msg" role="status">
+          <p className="report-bar-disabled-msg" id="report-bar-disabled-msg" role="status">
             {disabledMessage}
           </p>
         )}
@@ -61,6 +61,9 @@ export const ReportBar: React.FC<ReportBarProps> = ({
                 type="button"
                 className={`report-btn report-btn-level-${option.level} ${isThisSubmitting ? 'is-submitting' : ''}`}
                 disabled={isButtonDisabled}
+                aria-disabled={isButtonDisabled}
+                aria-describedby={disabledMessage ? 'report-bar-disabled-msg' : undefined}
+                aria-busy={isThisSubmitting ? 'true' : undefined}
                 onClick={() => onReport(option.level)}
                 aria-label={`Report queue time: ${option.label}`}
               >
