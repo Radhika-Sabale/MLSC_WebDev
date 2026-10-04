@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { getCanteen, submitReport, type Canteen as CanteenType, type CrowdLevel } from '../lib/api';
 import { useStatus } from '../hooks/useStatus';
+import { PageShell } from '../components/PageShell';
 import { StatusPill } from '../components/StatusPill';
 import { ReportBar } from '../components/ReportBar';
+import { BackButton } from '../components/BackButton';
 import { timeAgo, formatCountdown } from '../lib/time';
 
 const DEFAULT_COOLDOWN_SECONDS = 15 * 60; // 15-minute standard cooldown
 
 /**
- * Canteen Page - Stage 3 Canteen Display & Full Reporting Flow
- * Handles live status polling, anonymous reporting, cooldown countdown,
- * bad key invalidation, persistent local storage state, and error handling.
+ * Canteen Page - Stage 4 with PageShell and BackButton
+ * Shows real-time queue status, provides one-tap reporting, and manages
+ * local cooldowns, bad key handling, and mobile thumb navigation.
  */
 export const Canteen: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -29,13 +31,13 @@ export const Canteen: React.FC = () => {
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Specific reporting constraint states
+  // Cooldown & Key restriction states
   const [badKeyNotice, setBadKeyNotice] = useState<string | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
 
   const { status, loading: statusLoading, error: statusError, refetch } = useStatus(slug);
 
-  // 1. Initial setup: resolve canteen details, QR key, and persistent cooldown
+  // 1. Initial load & key resolution
   useEffect(() => {
     if (!slug) return;
 
@@ -46,7 +48,6 @@ export const Canteen: React.FC = () => {
     setErrorMessage(null);
     setConfirmationMessage(null);
 
-    // Resolve QR key from URL or fallback to sessionStorage
     const keyFromUrl = searchParams.get('k');
     const sessionKey = `canteen_qr_${slug}`;
 
@@ -88,8 +89,10 @@ export const Canteen: React.FC = () => {
       if (!isMounted) return;
       if (!res) {
         setCanteenNotFound(true);
+        document.title = 'Canteen Not Found | Canteen Crowd';
       } else {
         setCanteen(res);
+        document.title = `${res.name} | Canteen Crowd`;
       }
       setCanteenLoading(false);
     });
@@ -138,7 +141,6 @@ export const Canteen: React.FC = () => {
       setSubmittingLevel(null);
 
       if (result.ok) {
-        // A. Success: Show confirmation, refetch live status, and start 15-min cooldown
         setConfirmationMessage('Thanks! Your report is live.');
         refetch();
 
@@ -147,13 +149,12 @@ export const Canteen: React.FC = () => {
         try {
           localStorage.setItem(`canteen_cooldown_${slug}`, (Date.now() + cooldown * 1000).toString());
         } catch {
-          // Ignore storage restrictions
+          // Ignore
         }
         return;
       }
 
       if (result.reason === 'cooldown') {
-        // B. Cooldown triggered on server
         const remaining = result.retry_after_seconds;
         setCooldownSeconds(remaining);
         try {
@@ -165,9 +166,7 @@ export const Canteen: React.FC = () => {
       }
 
       if (result.reason === 'bad_key') {
-        // C. Bad key: disable reporting and advise rescanning
         setBadKeyNotice('That QR code did not work. Scan the QR code at the canteen again.');
-        // Invalidate stored session key
         try {
           sessionStorage.removeItem(`canteen_qr_${slug}`);
         } catch {
@@ -177,7 +176,6 @@ export const Canteen: React.FC = () => {
         return;
       }
 
-      // D. Invalid input or network error: show friendly error and allow immediate retry
       setErrorMessage(
         result.reason === 'invalid_input'
           ? 'Invalid report submitted. Please try again.'
@@ -204,31 +202,45 @@ export const Canteen: React.FC = () => {
     isBarDisabled = true;
   }
 
+  // Loading skeleton state
   if (canteenLoading) {
     return (
-      <main className="canteen-page" aria-busy="true">
-        <div className="skeleton skeleton-title" />
-        <div className="status-card">
+      <PageShell
+        header={
+          <div className="canteen-header">
+            <div className="skeleton skeleton-title" />
+            <div className="skeleton skeleton-line-sm" />
+          </div>
+        }
+      >
+        <div className="status-card" aria-busy="true">
           <div className="skeleton skeleton-pill" />
           <div className="skeleton skeleton-line" />
         </div>
-      </main>
+      </PageShell>
     );
   }
 
+  // Canteen not found error state
   if (canteenNotFound || !canteen) {
     return (
-      <main className="canteen-page">
-        <div className="canteen-error-view">
-          <h1 className="canteen-error-title">Canteen Not Found</h1>
-          <p className="canteen-error-desc">
-            The canteen you are looking for does not exist or has been moved.
-          </p>
-          <Link to="/" className="btn-secondary" aria-label="Return to all canteens">
-            Back to Canteens
-          </Link>
+      <PageShell
+        header={
+          <div className="canteen-header">
+            <h1 className="canteen-error-title" tabIndex={-1}>
+              Canteen Not Found
+            </h1>
+            <p className="canteen-error-desc">
+              The canteen you are looking for does not exist or has been moved.
+            </p>
+          </div>
+        }
+        bottomSlot={<BackButton to="/" label="Back to all canteens" />}
+      >
+        <div className="canteen-error-body">
+          <p>Please check the link or return to the campus canteens directory.</p>
         </div>
-      </main>
+      </PageShell>
     );
   }
 
@@ -245,87 +257,92 @@ export const Canteen: React.FC = () => {
     : null;
 
   return (
-    <main className="canteen-page">
-      <header className="canteen-header">
-        <h1 className="canteen-title">{canteen.name}</h1>
-        <p className="canteen-subtitle">Live campus queue status</p>
-      </header>
-
-      {/* Confirmation notification banner */}
-      {confirmationMessage && (
-        <div className="feedback-banner feedback-banner-success" aria-live="polite">
-          <span>{confirmationMessage}</span>
-          <button
-            type="button"
-            className="btn-dismiss"
-            onClick={() => setConfirmationMessage(null)}
-            aria-label="Dismiss confirmation message"
-          >
-            ×
-          </button>
+    <PageShell
+      className="canteen-page-shell"
+      header={
+        <div className="canteen-header">
+          <h1 className="canteen-title" tabIndex={-1}>
+            {canteen.name}
+          </h1>
+          <p className="canteen-subtitle">Live campus queue status</p>
         </div>
-      )}
-
-      {/* Error notification banner */}
-      {errorMessage && (
-        <div className="feedback-banner feedback-banner-error" aria-live="polite">
-          <span>{errorMessage}</span>
-          <button
-            type="button"
-            className="btn-dismiss"
-            onClick={() => setErrorMessage(null)}
-            aria-label="Dismiss error message"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {/* Live queue status card */}
-      <section className="status-card" aria-live="polite">
-        {statusLoading ? (
-          <>
-            <div className="skeleton skeleton-pill" />
-            <div className="skeleton skeleton-line" />
-          </>
-        ) : statusError ? (
-          <div className="status-error-inline">
-            <p>Unable to load live status.</p>
+      }
+      bottomSlot={
+        <ReportBar
+          disabled={isBarDisabled}
+          disabledMessage={barDisabledMessage}
+          onReport={handleReport}
+          submitting={submitting}
+          submittingLevel={submittingLevel}
+        />
+      }
+    >
+      <div className="canteen-body-area">
+        {/* Confirmation banner */}
+        {confirmationMessage && (
+          <div className="feedback-banner feedback-banner-success" aria-live="polite">
+            <span>{confirmationMessage}</span>
             <button
               type="button"
-              className="btn-retry"
-              onClick={() => refetch()}
-              aria-label="Retry loading queue status"
+              className="btn-dismiss"
+              onClick={() => setConfirmationMessage(null)}
+              aria-label="Dismiss confirmation message"
             >
-              Retry
+              ×
             </button>
           </div>
-        ) : (
-          <>
-            <StatusPill level={status?.level ?? null} size="lg" />
-            <div className="status-meta-group">
-              <span className="status-reports-line">{countLabel}</span>
-              {updatedLabel && <span className="status-time-line">{updatedLabel}</span>}
-            </div>
-          </>
         )}
-      </section>
 
-      {/* Secondary Bottom Navigation linking back to directory */}
-      <div className="bottom-nav-area">
-        <Link to="/" className="btn-secondary" aria-label="Return to all canteens">
-          ← Back to all canteens
-        </Link>
+        {/* Error banner */}
+        {errorMessage && (
+          <div className="feedback-banner feedback-banner-error" aria-live="polite">
+            <span>{errorMessage}</span>
+            <button
+              type="button"
+              className="btn-dismiss"
+              onClick={() => setErrorMessage(null)}
+              aria-label="Dismiss error message"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Live queue status card */}
+        <section className="status-card" aria-live="polite">
+          {statusLoading ? (
+            <>
+              <div className="skeleton skeleton-pill" />
+              <div className="skeleton skeleton-line" />
+            </>
+          ) : statusError ? (
+            <div className="status-error-inline">
+              <p>Unable to load live status.</p>
+              <button
+                type="button"
+                className="btn-retry"
+                onClick={() => refetch()}
+                aria-label="Retry loading queue status"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <>
+              <StatusPill level={status?.level ?? null} size="lg" />
+              <div className="status-meta-group">
+                <span className="status-reports-line">{countLabel}</span>
+                {updatedLabel && <span className="status-time-line">{updatedLabel}</span>}
+              </div>
+            </>
+          )}
+        </section>
+
+        {/* Back navigation button placed in scrollable area with ample bottom clearance */}
+        <div className="canteen-back-wrapper">
+          <BackButton to="/" label="Back to all canteens" />
+        </div>
       </div>
-
-      {/* Fixed thumb-friendly reporting bar */}
-      <ReportBar
-        disabled={isBarDisabled}
-        disabledMessage={barDisabledMessage}
-        onReport={handleReport}
-        submitting={submitting}
-        submittingLevel={submittingLevel}
-      />
-    </main>
+    </PageShell>
   );
 };
