@@ -737,6 +737,39 @@ body {
   color: var(--text-muted);
 }
 
+/* Canteen Page Bottom Clearance & Navigation */
+.canteen-page-shell .page-shell-content {
+  /* Generous bottom padding guarantees content and BackButton are never covered by fixed ReportBar */
+  padding-bottom: calc(240px + env(safe-area-inset-bottom, 0px));
+}
+
+.canteen-back-wrapper {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+/* 320px Compact Viewport & Zoom Safeguards */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+@media (max-width: 360px) {
+  .report-bar-buttons {
+    gap: 0.4rem;
+  }
+
+  .report-btn {
+    padding: 0.35rem 0.2rem;
+    font-size: 0.775rem;
+  }
+
+  .status-pill-lg {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+  }
+}
+
 /* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
