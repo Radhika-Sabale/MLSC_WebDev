@@ -21,7 +21,11 @@ export const NotFound: React.FC = () => {
           <p className="notfound-subtitle">We couldn't find the page you were looking for.</p>
         </div>
       }
-      bottomSlot={<BackButton to="/" label="Go home" ariaLabel="Go home to all canteens" />}
+      bottomSlot={
+        <nav aria-label="Page navigation">
+          <BackButton to="/" label="Go home" ariaLabel="Go home to all canteens" />
+        </nav>
+      }
     >
       <div className="notfound-content">
         <p className="notfound-desc">

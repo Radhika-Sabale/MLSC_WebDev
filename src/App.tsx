@@ -4,6 +4,7 @@ import { Home } from './pages/Home';
 import { Canteen } from './pages/Canteen';
 import { NotFound } from './pages/NotFound';
 import { ToastProvider } from './components/Toast';
+import { SkipLink } from './components/SkipLink';
 
 /**
  * RouteFocusManager ensures keyboard and screen-reader accessibility across SPA transitions:
@@ -28,6 +29,7 @@ export default function App() {
   return (
     <ToastProvider>
       <BrowserRouter>
+        <SkipLink />
         <RouteFocusManager />
         <div className="app-viewport">
           <Routes>

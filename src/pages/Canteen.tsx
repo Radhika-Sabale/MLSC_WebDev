@@ -280,7 +280,11 @@ export const Canteen: React.FC = () => {
             </p>
           </div>
         }
-        bottomSlot={<BackButton to="/" label="Back to all canteens" />}
+        bottomSlot={
+          <nav aria-label="Page navigation">
+            <BackButton to="/" label="Back to all canteens" />
+          </nav>
+        }
       >
         <div className="canteen-error-body">
           <p>Please check the link or return to the campus canteens directory.</p>
@@ -374,9 +378,9 @@ export const Canteen: React.FC = () => {
         </section>
 
         {/* Back navigation button placed in scrollable area with ample bottom clearance */}
-        <div className="canteen-back-wrapper">
+        <nav className="canteen-back-wrapper" aria-label="Page navigation">
           <BackButton to="/" label="Back to all canteens" />
-        </div>
+        </nav>
       </div>
     </PageShell>
   );

@@ -23,7 +23,9 @@ export const PageShell: React.FC<PageShellProps> = ({
   return (
     <div className={`page-shell ${className}`}>
       {header && <header className="page-shell-header">{header}</header>}
-      <main className="page-shell-content">{children}</main>
+      <main id="main" tabIndex={-1} className="page-shell-content">
+        {children}
+      </main>
       {bottomSlot && <div className="page-shell-bottom">{bottomSlot}</div>}
     </div>
   );
