@@ -10,6 +10,7 @@ dist-ssr/
 .env.local
 *.local
 keys.local.json
+database_password*
 
 # Generated QR Codes & posters
 qr-codes/
