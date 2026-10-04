@@ -9,6 +9,10 @@ dist-ssr/
 .env
 .env.local
 *.local
+keys.local.json
+
+# Generated QR Codes & posters
+qr-codes/
 
 # Logs
 logs

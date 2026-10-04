@@ -1,0 +1,8 @@
+{
+  "baseUrl": "https://your-deployment.vercel.app",
+  "keys": {
+    "fruit-canteen": "sample_secret_key_fruit_canteen_123456",
+    "main-canteen": "sample_secret_key_main_canteen_123456",
+    "staff-canteen": "sample_secret_key_staff_canteen_123456"
+  }
+}
